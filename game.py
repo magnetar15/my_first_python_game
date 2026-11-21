@@ -10,11 +10,22 @@
 # Dacă jucătorul introduce o opțiune care nu există, programul îi afișează un mesaj și îi cere din nou să aleagă.
 import sys
 import random
+import tkinter as tk
+import subprocess
+
+
 
 day = 1
 action = 0
 
-
+def easter_egg(text):
+    if sys.platform == "win32":
+        subprocess.run(["clip"], input=text.encode("utf-16le"), check=True)
+    elif sys.platform == "darwin":
+        subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
+    else:
+        # Pentru Linux (necesita xclip sau xsel)
+        subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode("utf-8"), check=True)
 
 # Începutul expediției
 # La începutul fiecărei expediții, jucătorul are:
@@ -49,31 +60,33 @@ action = 0
 # - se adaugă 5 puncte pentru fiecare porție rămasă de hrană sau apă;
 # - se adaugă punctele de explorare câștigate.
 # Programul afișează dacă jucătorul a câștigat sau a pierdut, câte zile a supraviețuit și scorul final.
-def scenario1():
-    global stats
-    stats["food"] = stats["food"] + 2
-    stats["exploration points"] = stats["exploration points"] + 10
-    print("You found 2 portions of food")
-    return (stats["exploration points"], stats["food"])
-def scenario2():
-    global stats
-    stats["water"] = stats["water"] + 2
-    stats["exploration points"] = stats["exploration points"] + 10
-    print("You found 2 bottles of water")
-    return (stats["exploration points"], stats["water"])
+stats = {
+            "hp": 100,
+            "food": 3,
+            "water": 3,
+            "exploration points": 0
+        }
+
+def intro():
+    print("Hello")
 
 def explore_island():
     global stats
-    z = random.choice("a", "b")
-    if z == "a":
-        scenario1()
-        return(1)
-    elif z == "b":
-        scenario2()
-        return(1)
-    else:
-        print("invalid option")
-        return(0)
+    while True:
+        z = random.choice("a", "b")
+        if z == "a":
+            stats["food"] = stats["food"] + 2
+            stats["exploration points"] = stats["exploration points"] + 10
+            print("You found 2 portions of food")
+            return (stats["exploration points"], stats["food"])
+        elif z == "b":
+            stats["water"] = stats["water"] + 2
+            stats["exploration points"] = stats["exploration points"] + 10
+            print("You found 2 bottles of water")
+            return (stats["exploration points"], stats["water"])
+        else:
+            print("invalid option")
+            continue
 
 
 def day_passed():
@@ -101,19 +114,23 @@ def rest():
 
 
 def search_food():
+    global stats
     print("Searching for food..")
     x = random.randint(1, 3)
     print("You found", x, "portions of food")
-    global stats
+    stats["food"] = stats["food"] + x
     stats["hp"] = stats["hp"] - 5
+    return(stats["hp"], stats["food"])
 
 
 def search_water():
+    global stats
     print("Searching for water..")
     x = random.randint(1, 3)
     print("You found", x, "water bottles")
-    global stats
+    stats["water"] = stats["water"] + x
     stats["hp"] = stats["hp"] - 5
+    return(stats["hp"], stats["water"])
 
 
 def daily_consume(food, water, hp):
@@ -137,6 +154,36 @@ def daily_consume(food, water, hp):
 
 
 while True:
+    special_characters = "!@#$%^&*()_-=+:\"|?><,."
+    name = input("Insert your name : ").capitalize().strip()
+    for i in special_characters:
+        if i in name == True:
+            print("Name cannot contain special characters")
+            continue
+    if name == "":
+        print("Invalid name")
+        continue
+    elif name.isdigit() == True:
+        print("The name can't be numeric")
+        continue
+    elif len(name) < 3:
+        print("The name is too short")
+        continue
+    elif name == "Andra":
+        print("Hei Andra, iti multumesc ca imi incerci jocul")
+        print("Tocmai ai deblocat un EASTER EGG !\n Deschide browserul si unde se introduce linkul\n apasa CTRL + V")
+        easter_egg("https://i.imgur.com/xO56E2c.jpeg")
+        input("Press any key to continue")
+        break
+    else:
+        print("Hello World and Hello", name)
+        input("Press any key to continue")
+        break
+
+
+
+
+while True:
     print("""
     1. Incepe o expeditie noua
     2. Vezi istoricul expeditiilor
@@ -145,12 +192,6 @@ while True:
     """)
     choice = input("Alege o optiune")
     if choice == "1":
-        stats = {
-            "hp": 100,
-            "food": 3,
-            "water": 3,
-            "exploration points": 0
-        }
         while True:
             print("""
             1. Search food
