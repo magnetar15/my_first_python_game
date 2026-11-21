@@ -288,8 +288,8 @@ while True:
             if STATUS == 5:
                 print("You died !")
                 game_statistics["player_name"].append(name)
-                game_statistics["is_winner"].append(True)
-                game_statistics["days_survived"].append(5)
+                game_statistics["is_winner"].append(False)
+                game_statistics["days_survived"].append(day - 1)
                 game_statistics["final_score"].append(stats["exploration points"])
                 game_statistics["total games"].append(games_played)
                 games_lost += 1
@@ -378,7 +378,7 @@ while True:
         if len(game_statistics["is_winner"]) == 0:
             print("You haven't played yet !")
             continue
-        for i in range(len(game_statistics["total_games"])):
+        for i in range(len(game_statistics["total games"])):
             print(f"{i}. {game_statistics["player_name"][i]} - {game_statistics['is_winner'][i]} - {game_statistics['days_survived'][i]} - {game_statistics['final_score'][i]} ")
             input("Press ENTER to continue")
             continue
@@ -388,11 +388,13 @@ while True:
         if len(game_statistics["is_winner"]) == 0:
             print("You haven't played yet !")
             continue
-        print("Number of expeditions : ", len(game_statistics["total_games"]))
+        print("Number of expeditions : ", len(game_statistics["total games"]))
         print("Games Won :", games_won)
         print("Games Lost :", games_lost)
-        print("Highest score : 10")
-        
+        print("Best score", max(game_statistics["final_score"]))
+        print("Total score",sum(game_statistics["final_score"]))
+
+
     elif choice == "4":
         sys.exit("See you soon")
     elif choice == "0":
