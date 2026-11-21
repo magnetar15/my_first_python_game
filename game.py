@@ -13,9 +13,12 @@ import subprocess
 # - 3 portions of water;
 # - 0 exploration points.
 # The goal is to stay alive for five days. The player loses if their health reaches 0.
+games_played = 1
 day = 1
 action = 0
 STATUS = 0
+games_won = 0
+games_lost = 0
 name = ""
 stats = {
             "hp": 100,
@@ -24,6 +27,13 @@ stats = {
             "exploration points": 0
         }
 
+game_statistics = {
+    "player_name": [],
+    "is_winner": [],
+    "days_survived": [],
+    "final_score": [],
+    "total games":[]
+}
 def easter_egg(text): # EASTER EGG FOR A FRIEND
     if sys.platform == "win32": # EASTER EGG FOR A FRIEND
         subprocess.run(["clip"], input=text.encode("utf-16le"), check=True) # EASTER EGG FOR A FRIEND
@@ -166,7 +176,7 @@ def explore_island():
             stats["food"] = stats["food"] + 2
             stats["exploration points"] = stats["exploration points"] + 10
             input("Press ENTER to continue")
-            return (stats["food"], 1)
+            return (stats["food"], stats["water"], stats["hp"], 1)
         elif z == "b":
             print("You found water!")
             print("+2 Water bottles")
@@ -174,22 +184,22 @@ def explore_island():
             stats["water"] = stats["water"] + 2
             stats["exploration points"] = stats["exploration points"] + 10
             input("Press ENTER to continue")
-            return (stats["water"], 1)
+            return (stats["food"], stats["water"], stats["hp"], 1)
         elif z == "c":
             print("You got injured while exploring")
             print("You took damage")
             if stats["hp"] > 15:
                 stats["hp"] = stats["hp"] - 15
                 print("HP left :", stats["hp"])
-                return (stats["hp"], 1)
+                return (stats["food"], stats["water"], stats["hp"], 1)
             elif stats["hp"] == 15:
                 stats["hp"] = 0
                 print("HP left :", stats["hp"])
-                return (stats["hp"], 5)
+                return (stats["food"], stats["water"], stats["hp"], 5)
             elif stats["hp"] < 15:
                 stats["hp"] = 0
                 print("HP left :", stats["hp"])
-                return (stats["hp"], 5)
+                return (stats["food"], stats["water"], stats["hp"], 5)
 
 # Each Day
 # At the beginning of each day, the player consumes one portion of food and one portion of water.
@@ -197,36 +207,40 @@ def explore_island():
 # - If the player does not have food or water, their health decreases by 15 points for each missing resource.
 # - Resources cannot drop below 0, and health cannot drop below 0 or rise above 100.
 # - If health reaches 0, the expedition ends in a loss.
-def daily_consume(food, water, hp):
+def daily_consume():
     global stats
     print("A new day, a new me")
     print("I'm hungry and thirsty")
-    if food > 0:
-        stats["food"] = stats["food"] - 1
+    # 1. Checking food
+    if stats["food"] > 0:
+        stats["food"] -= 1
         print("I ate a portion of food")
-    elif food == 0 and stats["hp"] > 15:
-        stats["hp"] = stats["hp"] - 15
+    else:
         print("I don't have any food")
         print("--you took damage--")
-        print("HP left :", stats["hp"])
-    elif food == 0 and stats["hp"] <= 15:
-        print("I don't have any food")
-        print("--you took damage--")
-        return (stats["hp"], stats["food"], stats["water"], 5)
-    if water > 0:
-        stats["water"] = stats["water"] - 1
+        if stats["hp"] > 15:
+            stats["hp"] -= 15
+            print("HP left :", stats["hp"])
+        else:
+            stats["hp"] = 0
+            print("HP left : 0")
+            return (stats["hp"], stats["food"], stats["water"], 5)
+    # 2. checking water
+    if stats["water"] > 0:
+        stats["water"] -= 1
         print("I drank a bottle of water")
-        return (stats["hp"], stats["food"], stats["water"], 0)
-    elif food == 0 and stats["water"] > 15:
-        stats["water"] = stats["water"] - 15
+    else:
         print("I don't have any water")
         print("--you took damage--")
-        print("HP left :", stats["hp"])
-        return (stats["hp"], stats["food"], stats["water"], 0)
-    elif food == 0 and stats["hp"] <= 15:
-        print("I don't have any water")
-        print("--you took damage--")
-        return (stats["hp"], stats["food"], stats["water"], 5)
+        if stats["hp"] > 15:
+            stats["hp"] -= 15
+            print("HP left :", stats["hp"])
+        else:
+            stats["hp"] = 0
+            print("HP left : 0")
+            return (stats["hp"], stats["food"], stats["water"], 5)
+
+    return (stats["hp"], stats["food"], stats["water"], 0)
 
 # Main Menu
 # The program displays this menu and returns to it after each action:
@@ -236,13 +250,14 @@ def daily_consume(food, water, hp):
 # 4. Quit
 while True:
     print("""
-    1. Incepe o expeditie noua
-    2. Vezi istoricul expeditiilor
-    3. Vezi statisticile
-    4. Iesire
+    1. Start a new expedition
+    2. See expedition history
+    3. See statistics
+    4. Quit
     """)
     choice = input("Alege o optiune")
     if choice == "1":
+        games_played += 1
         while True:
             if day == 1:
                 insert_name()
@@ -251,6 +266,42 @@ while True:
 #2. Search for water: Receive a random amount of 1 to 3 portions of water, but lose 5 health points.
 #3. Rest: Recover 20 health points, up to a maximum of 100.
 #4. Explore the island: One of these events happens at random, with equal chances:
+            if day == 6:
+                print("Congratulations, you survived")
+                print("Rescue team is arriving")
+                game_statistics["player_name"].append(name)
+                game_statistics["is_winner"].append(True)
+                game_statistics["days_survived"].append(5)
+                game_statistics["final_score"].append(stats["exploration points"])
+                game_statistics["total games"].append(games_played)
+                games_won += 1
+                stats = {
+                    "hp": 100,
+                    "food": 3,
+                    "water": 3,
+                    "exploration points": 0
+                }
+                day = 1
+                STATUS = 0
+                break
+
+            if STATUS == 5:
+                print("You died !")
+                game_statistics["player_name"].append(name)
+                game_statistics["is_winner"].append(True)
+                game_statistics["days_survived"].append(5)
+                game_statistics["final_score"].append(stats["exploration points"])
+                game_statistics["total games"].append(games_played)
+                games_lost += 1
+                stats = {
+                    "hp": 100,
+                    "food": 3,
+                    "water": 3,
+                    "exploration points": 0
+                }
+                day = 1
+                STATUS = 0
+                break
             print("""
             1. Search food 
             2. Search water
@@ -259,17 +310,12 @@ while True:
             5. Quit
             """)
             action = input("Chose an option")
-            if day == 6:
-                action = "9"
-
-            if STATUS == 5:
-                print("You died !")
-                break
             if action == "1":
                 stats["hp"], stats["food"], STATUS = search_food()
                 if STATUS == 1:
                     day = day_passed()
-                    daily_consume()
+                    if day <= 5:
+                        stats["hp"], stats["food"], stats["water"], STATUS = daily_consume()
                     action = "0"
                 elif STATUS == 0:
                     action = "0"
@@ -281,7 +327,8 @@ while True:
                 stats["hp"], stats["water"], STATUS = search_water()
                 if STATUS == 1:
                     day = day_passed()
-                    daily_consume()
+                    if day <= 5:
+                        stats["hp"], stats["food"], stats["water"], STATUS = daily_consume()
                     action = "0"
                 elif STATUS == 0:
                     action = "0"
@@ -290,11 +337,11 @@ while True:
                     continue
 
             elif action == "3":
-                rest()
-                stats["hp"], STATUS = search_food()
+                stats["hp"], STATUS = rest()
                 if STATUS == 1:
                     day = day_passed()
-                    daily_consume()
+                    if day <= 5:
+                        stats["hp"], stats["food"], stats["water"], STATUS = daily_consume()
                     action = "0"
                     continue
                 elif STATUS == 0:
@@ -302,11 +349,13 @@ while True:
                     continue
 
             elif action == "4":
-                explore_island()
+                stats["food"], stats["water"], stats["hp"], STATUS = explore_island()
                 if STATUS == 1:
                     day = day_passed()
-                    daily_consume()
+                    if day <= 5:
+                        stats["hp"], stats["food"], stats["water"], STATUS = daily_consume()
                     action = "0"
+                    continue
                 elif STATUS == 0:
                     action = "0"
                     continue
@@ -316,19 +365,34 @@ while True:
                 sys.exit()
             elif action == "0":
                 continue
-            elif action == "9":
-                print("Congratulations, you survived")
-                print("Rescue team is arriving")
-                print("")
             else:
                 print("Invalid option")
                 continue
 
-
+#The history keeps track of expeditions played since the program started. For each expedition, display:
+# - the player’s name;
+# - the result: won or lost;
+# - the number of days survived;
+# - the final score.
     elif choice == "2":
-        pass
+        if len(game_statistics["is_winner"]) == 0:
+            print("You haven't played yet !")
+            continue
+        for i in range(len(game_statistics["total_games"])):
+            print(f"{i}. {game_statistics["player_name"][i]} - {game_statistics['is_winner'][i]} - {game_statistics['days_survived'][i]} - {game_statistics['final_score'][i]} ")
+            input("Press ENTER to continue")
+            continue
+#The statistics display the number of expeditions, how many were won and lost, the highest and lowest scores,
+    # the total points, and the average score.
     elif choice == "3":
-        pass
+        if len(game_statistics["is_winner"]) == 0:
+            print("You haven't played yet !")
+            continue
+        print("Number of expeditions : ", len(game_statistics["total_games"]))
+        print("Games Won :", games_won)
+        print("Games Lost :", games_lost)
+        print("Highest score : 10")
+        
     elif choice == "4":
         sys.exit("See you soon")
     elif choice == "0":
@@ -336,15 +400,3 @@ while True:
     else:
         print("Optiune invalida")
         continue
-
-# Istoric și statistici
-# Istoricul păstrează expedițiile desfășurate de la pornirea programului. Pentru fiecare, afișează:
-# - numele jucătorului;
-# - rezultatul: câștigată sau pierdută;
-# - numărul de zile supraviețuite;
-# - scorul final.
-# Statisticile afișează numărul expedițiilor, câte au fost câștigate și pierdute,
-#  cel mai mare și cel mai mic scor, totalul punctelor și media scorurilor.
-
-# Dacă jucătorul cere istoricul sau statisticile înainte să termine vreo expediție,
-#  programul afișează un mesaj potrivit. Istoricul trebuie să rămână disponibil cât timp programul rulează.
