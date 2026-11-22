@@ -43,8 +43,6 @@ def easter_egg(text): # EASTER EGG FOR A FRIEND
         subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode("utf-8"), check=True)# EASTER EGG FOR A FRIEND
 
 
-
-
 def insert_name():
     while True:
         special_characters = "!@#$%^&*()_-=+:\"|?><,."
@@ -272,7 +270,12 @@ while True:
                 game_statistics["player_name"].append(name)
                 game_statistics["is_winner"].append(True)
                 game_statistics["days_survived"].append(5)
-                game_statistics["final_score"].append(stats["exploration points"])
+                final_score_days_survived = 10 * 5
+                final_score_hp_left = stats["hp"]
+                final_score_food_left = stats["food"] * 5
+                final_score_water_left = stats["water"] * 5
+                round_end_score = final_score_days_survived + final_score_food_left + final_score_water_left + stats["exploration points"] + final_score_hp_left
+                game_statistics["final_score"].append(round_end_score)
                 game_statistics["total games"].append(games_played)
                 games_won += 1
                 stats = {
@@ -290,7 +293,13 @@ while True:
                 game_statistics["player_name"].append(name)
                 game_statistics["is_winner"].append(False)
                 game_statistics["days_survived"].append(day - 1)
-                game_statistics["final_score"].append(stats["exploration points"])
+                final_score_days_survived = 10 * game_statistics["days_survived"]
+                final_score_hp_left = stats["hp"]
+                final_score_food_left = stats["food"] * 5
+                final_score_water_left = stats["water"] * 5
+                round_end_score = final_score_days_survived + final_score_food_left + final_score_water_left + stats[
+                    "exploration points"] + final_score_hp_left
+                game_statistics["final_score"].append(round_end_score)
                 game_statistics["total games"].append(games_played)
                 games_lost += 1
                 stats = {
@@ -391,8 +400,9 @@ while True:
         print("Number of expeditions : ", len(game_statistics["total games"]))
         print("Games Won :", games_won)
         print("Games Lost :", games_lost)
-        print("Best score", max(game_statistics["final_score"]))
-        print("Total score",sum(game_statistics["final_score"]))
+        print("Best score :", max(game_statistics["final_score"]))
+        print("Total score :",sum(game_statistics["final_score"]))
+        print("Score average :", sum(game_statistics["final_score"]) / len(game_statistics["final_score"]))
 
 
     elif choice == "4":
@@ -400,5 +410,5 @@ while True:
     elif choice == "0":
         continue
     else:
-        print("Optiune invalida")
+        print("Invalid Option")
         continue
